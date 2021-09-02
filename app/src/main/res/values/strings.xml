@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">ReporteMascotasPerdidas</string>
+    <string name="title_activity_maps">Map</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="agregar">agregar</string>
+
+    <string name="tipo">Tipo de animal</string>
+    <string name="tamano">Tapaño</string>
+    <string name="color">Color</string>
+    <string name="caracteristicas">Caracteristicas</string>
+    <string name="fecha">Fecha</string>
+    <string name="hora">Hora</string>
+
+</resources>

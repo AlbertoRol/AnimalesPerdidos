@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "422849480459",
+    "project_id": "reporteanimalesperdidos",
+    "storage_bucket": "reporteanimalesperdidos.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:422849480459:android:fd1c5e864163b03719440e",
+        "android_client_info": {
+          "package_name": "com.albertora.reportemascotasperdidas"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "422849480459-uopounlfubhgu4g1f3oiqidq43lnlbco.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.albertora.reportemascotasperdidas",
+            "certificate_hash": "e81cf051635abb867d22973a2f06eeab72210cb1"
+          }
+        },
+        {
+          "client_id": "422849480459-1lluii4cb9dfsjtpo7lgju6v5qbk98oe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVIfqHH7ip7yws1Dx1pLIlb5MmiaAE_KY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "422849480459-1lluii4cb9dfsjtpo7lgju6v5qbk98oe.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
