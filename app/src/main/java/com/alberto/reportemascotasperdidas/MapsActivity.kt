@@ -1,16 +1,25 @@
 package com.alberto.reportemascotasperdidas
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
 import com.alberto.reportemascotasperdidas.Models.GetReportes
 import com.alberto.reportemascotasperdidas.ViewModel.VMDatos
 import com.alberto.reportemascotasperdidas.databinding.ActivityMapsBinding
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
@@ -18,6 +27,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlin.math.log
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
@@ -32,37 +42,53 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private lateinit var markerCasa: Marker
 
     private val model: VMDatos by viewModels()
-    var longi = ""
-    var lati = ""
     val mHashMap = HashMap<Marker, String>()
-    var keys = ""
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var latitude: String? = null
+    private var longitud: String? = null
+    private lateinit var camera: LatLng
+
+
+    @SuppressLint("MissingPermission")
+    private val activityResultLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            if (it) {
+                //Log.d(TAG, "permitido: ")
+                fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location: Location? ->
+                        Log.d(TAG, "ubicacion " + location!!.latitude + " " + location.longitude)
+                        latitude = location!!.latitude.toString()
+                        longitud = location!!.longitude.toString()
+                        camera = LatLng(latitude!!.toDouble(), longitud!!.toDouble())
+                        val zoomLevel = 18.0f
+                        mMap.isMyLocationEnabled = true
+                        mMap.uiSettings.isZoomControlsEnabled = true
+                        mMap.uiSettings.isMyLocationButtonEnabled = true
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(camera, zoomLevel))
+                    }
+            } else {
+                Log.d(TAG, "no permitido: ")
+            }
+        }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
+        permisoUbicacion()
 
-        nuevoReporte = findViewById(R.id.nuevo)
-        nuevoReporte.setOnClickListener(View.OnClickListener {
-           val intent = Intent(this, ActivityR::class.java)
-            startActivity(intent)
-        })
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-
-        /*val database = Firebase.database.reference
-       listFotos.add("sdhsjdkhskdj")
-       listFotos.add("sdhsjdkhskdj")
-       listFotos.add("sdhsjdkhskdj")
-
-
-        val reportes = Reportes("perro","mediano","cafe","chumuelo lastimado","12/08/67","dsdsadsadsd",listFotos)
-        database.child("reportes").push().setValue(reportes)*/
-
+        nuevoReporte = findViewById(R.id.nuevo)
+        nuevoReporte.setOnClickListener(View.OnClickListener {
+            val intent = Intent(this, ActivityR::class.java)
+            startActivity(intent)
+        })
     }
 
     /**
@@ -77,11 +103,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         model.getAltas().observe(this, Observer<ArrayList<GetReportes>> {
-            Log.d(TAG, "size: " + it.size)
+            //Log.d(TAG, "size: " + it.size)
             for(i in 0 until it.size){
-                Log.d(TAG, "keys: " + it[i].keys!![i])
-                Log.d(TAG, "latitud: " + (it[i].reportes!![i].coordenadas!!.get(0)))
-                Log.d(TAG, "longitud: " + (it[i].reportes!![i].coordenadas?.get(1)))
+                //Log.d(TAG, "keys: " + it[i].keys!![i])
+                //Log.d(TAG, "latitud: " + (it[i].reportes!![i].coordenadas!!.get(0)))
+                //Log.d(TAG, "longitud: " + (it[i].reportes!![i].coordenadas?.get(1)))
                 var marker = LatLng(it[i].reportes!![i].coordenadas!!.get(0).toDouble(), it[i].reportes!![i].coordenadas?.get(1)!!.toDouble())
 
                 markerCasa = mMap.addMarker(MarkerOptions().position(marker).title("Perth"))
@@ -114,5 +140,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         // for the default behavior to occur (which is for the camera to move such that the
         // marker is centered and for the marker's info window to open, if it has one).
         return false
+    }
+
+    fun permisoUbicacion() {
+        activityResultLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 }
