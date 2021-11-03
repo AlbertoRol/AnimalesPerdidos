@@ -4,6 +4,7 @@ package com.alberto.reportemascotasperdidas
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
 import android.location.Location
 import android.os.Bundle
 import android.text.format.DateFormat.is24HourFormat
@@ -17,6 +18,7 @@ import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.alberto.reportemascotasperdidas.Models.FormatoFecha
@@ -25,6 +27,9 @@ import com.alberto.reportemascotasperdidas.ViewModel.VMDatos
 import com.github.dhaval2404.imagepicker.ImagePicker
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.appbar.CollapsingToolbarLayout
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -41,6 +46,7 @@ class NuevoReporte : Fragment() {
 
     private var guarda: FloatingActionButton? = null
     private var fotosGaleria: FloatingActionButton? = null
+    private var atras: FloatingActionButton? = null
     private var spinnerAnimal: TextInputLayout? = null
     private var datosAnimal: AutoCompleteTextView? = null
     private var spinnerTamano: TextInputLayout? = null
@@ -56,6 +62,12 @@ class NuevoReporte : Fragment() {
     private var tamano: String? = null
     private var latitude: String? = null
     private var longitud: String? = null
+    private var hm: String? = null
+
+    private var id: String? = null
+    private var nombre: String? = null
+    private var email: String? = null
+    private var foto: String? = null
 
     private val model: VMDatos by activityViewModels()
     private var fechaFormato: String? = null
@@ -105,6 +117,17 @@ class NuevoReporte : Fragment() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
+        model.datosUsuario.observe(viewLifecycleOwner, { datos ->
+            Log.d(TAG, "arrayNuevoi: " + datos.size)
+
+            for (datosUsuario  in datos){
+                id = datosUsuario.idUsuario
+                nombre = datosUsuario.nombre
+                email = datosUsuario.email
+                foto = datosUsuario.img
+            }
+        })
+
         //registerPermissionRequest()
         fotosGaleria = view.findViewById(R.id.fotos)
         spinnerAnimal = view.findViewById(R.id.spinnerAnimal)
@@ -116,6 +139,7 @@ class NuevoReporte : Fragment() {
         fecha = view.findViewById(R.id.date)
         hora = view.findViewById(R.id.time)
         guarda = view.findViewById(R.id.guardar)
+        atras = view.findViewById(R.id.atras)
 
         model.getTipoAnimal()
         model.getTamano()
@@ -159,48 +183,16 @@ class NuevoReporte : Fragment() {
         })
 
         fotosGaleria!!.setOnClickListener {
-            /*val reportes = Reportes("perro","mediano","cafe","chumuelo lastimado","12/08/67","dsdsadsadsd")
-            database.child("reportes").child("altas").push().setValue(reportes)*/
-            ImagePicker.with(this)
-                .crop()                    //Crop image(Optional), Check Customization for more option
-                .compress(1024)            //Final image size will be less than 1 MB(Optional)
-                .maxResultSize(
-                    1080,
-                    1080
-                )    //Final image resolution will be less than 1080 x 1080(Optional)
-                .createIntent { intent ->
-                    startForProfileImageResult.launch(intent)
-                }
+            fotos()
         }
 
         guarda!!.setOnClickListener {
+            guardarReporte()
+        }
 
-            model.insertAlta(
-                Reportes(
-                    animal, tamano, color!!.editText?.text.toString(),
-                    caracteristicas!!.editText?.text.toString(), fechaFormato
-                )
-            )
-
-            model.alta.observe(viewLifecycleOwner, {
-                var key = it
-                Log.d(TAG, "alta1: " + it.toString())
-                model.insertCoordenadas(it, latitude!!, longitud!!)
-                model.coordenadas.observe(viewLifecycleOwner, {
-                    Log.d(TAG, "coordenadas: " + it)
-                })
-                //arrayLocation.clear()
-                if (arrayImagenes.size != 0) {
-                    model.insertFotosAlta(key, arrayImagenes)
-                    model.imagenes.observe(viewLifecycleOwner, {
-                        Log.d(TAG, "imagenes: " + it)
-                        arrayImagenes.clear()
-                    })
-                }else {
-                    key = ""
-                    Log.d(TAG, "key: " + key)
-                }
-            })
+        atras!!.setOnClickListener {
+            val fragmentMaps = FragmentMaps()
+            detailFraagment(fragmentMaps)
         }
 
         return view
@@ -265,21 +257,88 @@ class NuevoReporte : Fragment() {
             MaterialTimePicker.Builder()
                 .setTimeFormat(clockFormat)
                 .setHour(12)
-                .setMinute(10)
+                .setMinute(0)
                 .build()
 
         picker.show(parentFragmentManager, "tag");
 
         picker.addOnPositiveButtonClickListener {
-            val h = picker.hour
+            var h = picker.hour
             val minuto = picker.minute
             hora!!.setText(h.toString() + ":" + minuto)
             hora!!.clearFocus()
+            hm = h.toString() + ":" + minuto
         }
+    }
+
+    fun guardarReporte(){
+        model.insertAlta(
+            Reportes(
+                animal, tamano, color!!.editText?.text.toString(),
+                caracteristicas!!.editText?.text.toString(), fechaFormato,hm), id!!
+        )
+
+        model.alta.observe(viewLifecycleOwner, {
+            var key = it
+            Log.d(TAG, "alta1: " + it.toString())
+            model.insertCoordenadas(it, latitude!!, longitud!!,id!!)
+            model.coordenadas.observe(viewLifecycleOwner, {
+                //Log.d(TAG, "coordenadas: " + it)
+            })
+            //arrayLocation.clear()
+            if (arrayImagenes.size != 0) {
+                model.insertFotosAlta(key, arrayImagenes,id!!)
+                model.imagenes.observe(viewLifecycleOwner, {
+                    Log.d(TAG, "imagenes: " + it)
+                    arrayImagenes.clear()
+                })
+            }else {
+                key = ""
+                //Log.d(TAG, "key: " + key)
+            }
+            mainFragment()
+        })
+    }
+
+    fun fotos(){
+        /*val reportes = Reportes("perro","mediano","cafe","chumuelo lastimado","12/08/67","dsdsadsadsd")
+            database.child("reportes").child("altas").push().setValue(reportes)*/
+        ImagePicker.with(this)
+            .crop()                    //Crop image(Optional), Check Customization for more option
+            .compress(1024)            //Final image size will be less than 1 MB(Optional)
+            .maxResultSize(
+                1080,
+                1080
+            )    //Final image resolution will be less than 1080 x 1080(Optional)
+            .createIntent { intent ->
+                startForProfileImageResult.launch(intent)
+            }
     }
 
     fun permisoUbicacion() {
         activityResultLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
+    fun mainFragment(){
+        val intent = Intent(activity, MapsActivity::class.java)
+        intent.putExtra("id", id)
+        intent.putExtra("nombre", nombre)
+        intent.putExtra("email", email)
+        intent.putExtra("foto", foto)
+        startActivity(intent)
+    }
+
+    fun detailFraagment(fragment: Fragment){
+        val mapsFrgament = fragment
+        val ft = activity?.supportFragmentManager?.beginTransaction()
+            ?.setCustomAnimations(
+                R.anim.slide_in,  // enter
+                R.anim.fade_out,  // exit
+                R.anim.fade_in,  // popEnter
+                R.anim.slide_out // popExit
+            )
+            ?.replace(R.id.frame, mapsFrgament)
+        // Apply the transaction
+        ft?.commit()
+    }
 }

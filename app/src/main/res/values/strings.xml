@@ -11,5 +11,17 @@
     <string name="caracteristicas">Caracteristicas</string>
     <string name="fecha">Fecha</string>
     <string name="hora">Hora</string>
+    <string name="reporte">Nuevo reporte</string>
+    <string name="search">Eliminar</string>
+    <string name="compartir">Compartir</string>
+    <string name="facebook_app_id">3971515856288377</string>
+    <string name="fb_login_protocol_scheme">fb3971515856288377</string>
+    <string name="facebookLogin">Iniciar sesion con Facebook</string>
+    <string name="guardarreporte">guardarReporte</string>
+    <string name="regresoalmapa">regresoAlMapa</string>
+    <string name="fotos">fotos</string>
+    <string name="mis_reportes">Mis Reportes</string>
+    <string name="salir">Salir</string>
+    <string name="Inicio">inicio</string>
 
 </resources>

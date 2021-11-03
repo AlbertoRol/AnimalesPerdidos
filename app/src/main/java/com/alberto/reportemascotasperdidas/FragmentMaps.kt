@@ -3,36 +3,27 @@ package com.alberto.reportemascotasperdidas
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
+import androidx.fragment.app.Fragment
+import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
-import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentContainer
-import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
-import com.alberto.reportemascotasperdidas.DetailMarker
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import com.alberto.reportemascotasperdidas.Models.DatosPerfilUsuario
-import com.alberto.reportemascotasperdidas.Models.GetReportes
-import com.alberto.reportemascotasperdidas.NuevoReporte
-import com.alberto.reportemascotasperdidas.R
 import com.alberto.reportemascotasperdidas.ViewModel.VMDatos
 import com.facebook.login.LoginManager
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -41,26 +32,22 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.material.appbar.AppBarLayout
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationView
 import com.squareup.picasso.Picasso
 import de.hdodenhof.circleimageview.CircleImageView
 
+class FragmentMaps : Fragment() {
 
-
-
-
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
     lateinit var mAdView : AdView
-    private val TAG = "Main"
+    private val TAG = "MainFragment"
     private lateinit var nuevoReporte: FloatingActionButton
 
     private lateinit var mMap: GoogleMap
     private lateinit var markerCasa: Marker
 
 
-    private val model: VMDatos by viewModels()
+    private val model: VMDatos by activityViewModels()
     val mHashMap = HashMap<Marker, String>()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var latitude: String? = null
@@ -86,7 +73,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
             if (it) {
                 //Log.d(TAG, "permitido: ")
-                fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+                fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
                 fusedLocationClient.lastLocation
                     .addOnSuccessListener { location: Location? ->
                         //Log.d(TAG, "ubicacion " + location!!.latitude + " " + location.longitude)
@@ -103,25 +90,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             }
         }
 
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_maps)
-        MobileAds.initialize(this) {}
-        mAdView = findViewById(R.id.adView)
-        materialToolBar = findViewById(R.id.topAppBar)
-        drawerLayout = findViewById(R.id.drawer_layout)
-        navigationView = findViewById(R.id.navigation_view)
-        appbarLayout = findViewById(R.id.appbar)
-
-        permisoUbicacion()
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
-
-        model.datosUsuario.observe(this, { datos ->
-            Log.d(TAG, "hola: ")
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        model.datosUsuario.observe(viewLifecycleOwner, { datos ->
 
             for (datosUsuario in datos){
                 idUsuario = datosUsuario.idUsuario!!
@@ -143,9 +114,82 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 val correo = header.findViewById<TextView>(R.id.email)
                 name.text = nombre
                 correo.text = email
-
             }
         })
+
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        // Inflate the layout for this fragment
+        val view : View = inflater.inflate(R.layout.fragment__maps, container, false)
+
+        mAdView = view.findViewById(R.id.adView)
+        materialToolBar = view.findViewById(R.id.topAppBar)
+        drawerLayout = view.findViewById(R.id.drawer_layout)
+        navigationView = view.findViewById(R.id.navigation_view)
+        appbarLayout = view.findViewById(R.id.appbar)
+
+        permisoUbicacion()
+        try{
+            val supportMapFragment: SupportMapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+            supportMapFragment.getMapAsync(object: OnMapReadyCallback, GoogleMap.OnMarkerClickListener{
+                override fun onMapReady(map: GoogleMap) {
+                    mMap = map
+                    val booleanSuccess = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(),R.raw.style_json))
+                    if (!booleanSuccess){
+                        Log.d(TAG, "Style parsing failed.")
+                    }
+
+                    model.getKeysUsers().observe(viewLifecycleOwner, {
+                        for (keys in it){
+                            arrayKeysUsuarios.add(keys)
+                        }
+                        model.getAltas(it).observe(viewLifecycleOwner, {
+                            Log.d(TAG, "size: " + it.size)
+                            for (keys in arrayKeysUsuarios){
+                                for(i in 0 until it.size){
+                                    //Log.d(TAG, "status:45 " + it[i].keys!![i])
+                                    //Log.d(TAG, "longitud: " + (it[i].reportes!![i].coordenadas?.get(1)))
+                                    var marker = LatLng(it[i].reportes!![i].coordenadas!!.get(0).toDouble(), it[i].reportes!![i].coordenadas?.get(1)!!.toDouble())
+
+                                    when(it[i].reportes!![i].tipo){
+                                        "Gato" -> markerCasa = mMap.addMarker(
+                                            MarkerOptions().position(marker).icon(BitmapDescriptorFactory.fromResource(R.drawable.gato)).title(keys))
+                                        "Perro" -> markerCasa = mMap.addMarker(
+                                            MarkerOptions().position(marker).icon(BitmapDescriptorFactory.fromResource(R.drawable.perro)).title(keys))
+                                        else ->{
+                                            markerCasa = mMap.addMarker(MarkerOptions().position(marker))
+                                        }
+                                    }
+                                    mMap.isMyLocationEnabled()
+                                    mMap.setOnMarkerClickListener(this)
+                                    mHashMap.put(markerCasa,it[i].keys!![i])
+                                }
+                            }
+                        })
+                    })
+                }
+
+                override fun onMarkerClick(marker: Marker): Boolean {
+                    // Retrieve the data from the marker.
+                    val clickCount = marker.tag as? Int
+                    val id = mHashMap.get(marker)
+
+                    Log.d(TAG, "id: " + id)
+                    model.getReporteById(marker.title,id.toString())
+                    model.setKey(id.toString())
+                    val detailMarkers = DetailMarker()
+                    detailFraagment(detailMarkers)
+
+                    return false
+                }
+            })
+        }catch (ex: Exception){
+            Log.d(TAG, "error: " + ex)
+        }
 
 
         materialToolBar.setNavigationOnClickListener {
@@ -169,13 +213,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         mAdView.loadAd(adRequest)
 
 
-        nuevoReporte = findViewById(R.id.nuevo)
+        nuevoReporte = view.findViewById(R.id.nuevo)
         nuevoReporte.setOnClickListener(View.OnClickListener {
-            arrayDatosUsuario.add(DatosPerfilUsuario(id,nombre,email,foto))
-            model.setDatosUsuario(arrayDatosUsuario)
             val nuevoReporte = NuevoReporte()
             detailFraagment(nuevoReporte)
         })
+
+        return view
     }
 
     /**
@@ -187,93 +231,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-        val booleanSuccess = mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this,R.raw.style_json))
-        if (!booleanSuccess){
-            Log.d(TAG, "Style parsing failed.")
-        }
 
-        model.getKeysUsers().observe(this, {
-            for (keys in it){
-                arrayKeysUsuarios.add(keys)
-            }
-            model.getAltas(it).observe(this, {
-                Log.d(TAG, "size: " + it.size)
-                for (keys in arrayKeysUsuarios){
-                    for(i in 0 until it.size){
-                        //Log.d(TAG, "status:45 " + it[i].keys!![i])
-                        //Log.d(TAG, "longitud: " + (it[i].reportes!![i].coordenadas?.get(1)))
-                        var marker = LatLng(it[i].reportes!![i].coordenadas!!.get(0).toDouble(), it[i].reportes!![i].coordenadas?.get(1)!!.toDouble())
-
-                        when(it[i].reportes!![i].tipo){
-                            "Gato" -> markerCasa = mMap.addMarker(MarkerOptions().position(marker).
-                            icon(BitmapDescriptorFactory.fromResource(R.drawable.gato)).title(keys))
-                            "Perro" -> markerCasa = mMap.addMarker(MarkerOptions().position(marker).
-                            icon(BitmapDescriptorFactory.fromResource(R.drawable.perro)).title(keys))
-                            else ->{
-                                markerCasa = mMap.addMarker(MarkerOptions().position(marker))
-                            }
-                        }
-                        mMap.isMyLocationEnabled()
-                        mMap.setOnMarkerClickListener(this)
-                        mHashMap.put(markerCasa,it[i].keys!![i])
-                    }
-                }
-            })
-        })
-        /*model.getAltas().observe(this, Observer<ArrayList<GetReportes>> {
-            Log.d(TAG, "size: " + it.size)
-            for(i in 0 until it.size){
-                //Log.d(TAG, "status: " + it[i].keys!![i])
-                //Log.d(TAG, "longitud: " + (it[i].reportes!![i].coordenadas?.get(1)))
-                var marker = LatLng(it[i].reportes!![i].coordenadas!!.get(0).toDouble(), it[i].reportes!![i].coordenadas?.get(1)!!.toDouble())
-
-                when(it[i].reportes!![i].tipo){
-                    "Gato" -> markerCasa = mMap.addMarker(MarkerOptions().position(marker).icon(BitmapDescriptorFactory.fromResource(R.drawable.gato)))
-                    "Perro" -> markerCasa = mMap.addMarker(MarkerOptions().position(marker).icon(BitmapDescriptorFactory.fromResource(R.drawable.perro)))
-                    else ->{
-                        markerCasa = mMap.addMarker(MarkerOptions().position(marker))
-                    }
-                }
-                mMap.isMyLocationEnabled()
-                mMap.setOnMarkerClickListener(this)
-                mHashMap.put(markerCasa,it[i].keys!![i])
-            }
-        })*/
-    }
-
-    override fun onMarkerClick(marker: Marker): Boolean {
-        // Retrieve the data from the marker.
-        val clickCount = marker.tag as? Int
-        val id = mHashMap.get(marker)
-
-        Log.d(TAG, "id: " + id)
-        model.getReporteById(marker.title,id.toString())
-        model.setKey(id.toString())
-        val detailMarkers = DetailMarker()
-        detailFraagment(detailMarkers)
-        /*val modalBottomSheet = ModalBottomSheet()
-        modalBottomSheet.show(supportFragmentManager, ModalBottomSheet.TAG)*/
-
-        // Check if a click count was set, then display the click count.
-/*        clickCount?.let {
-            val newClickCount = it + 1
-            marker.tag = newClickCount
-            Toast.makeText(
-                this,
-                "${marker.title} has been clicked $newClickCount times.",
-                Toast.LENGTH_SHORT
-            ).show()
-        }*/
-
-
-
-        // Return false to indicate that we have not consumed the event and that we wish
-        // for the default behavior to occur (which is for the camera to move such that the
-        // marker is centered and for the marker's info window to open, if it has one).
-        return false
-    }
 
     fun permisoUbicacion() {
         activityResultLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -283,36 +241,38 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         appbarLayout.visibility = View.GONE
         nuevoReporte.visibility = View.GONE
         val nuevoReporte = fragment
-        val ft = supportFragmentManager?.beginTransaction()
+        val ft = activity?.supportFragmentManager?.beginTransaction()
             ?.setCustomAnimations(
                 R.anim.slide_in,  // enter
                 R.anim.fade_out,  // exit
                 R.anim.fade_in,  // popEnter
                 R.anim.slide_out // popExit
             )
-            ?.replace(R.id.map, nuevoReporte)
+            ?.replace(R.id.frame, nuevoReporte)
         // Apply the transaction
         ft?.commit()
     }
 
-    override fun onBackPressed() {
-
-    }
 
     fun logOut(){
+        val fragment = FragmentLogin()
         LoginManager.getInstance().logOut()
-        val intent = Intent(this, Login::class.java)
-        startActivity(intent)
+        val ft = activity?.supportFragmentManager?.beginTransaction()
+            ?.setCustomAnimations(
+                R.anim.slide_in,  // enter
+                R.anim.fade_out,  // exit
+                R.anim.fade_in,  // popEnter
+                R.anim.slide_out // popExit
+            )
+            ?.replace(R.id.frame, fragment)
+        // Apply the transaction
+        ft?.commit()
     }
 
     fun misRpeortes(){
         appbarLayout.visibility = View.GONE
-        var arrayUsuario : ArrayList<DatosPerfilUsuario> = ArrayList()
-        arrayUsuario.add(DatosPerfilUsuario(id,nombre,email,foto))
-        model.datosPerfilUsuario(arrayUsuario)
-        model.setKeyUserMisReportes(id!!)
+        model.setKeyUserMisReportes(idUsuario!!)
         val fragmentMisReportes = FragmentMisReportes()
         detailFraagment(fragmentMisReportes)
     }
-
 }

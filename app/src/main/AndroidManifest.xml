@@ -15,10 +15,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ReporteMascotasPerdidas">
-        <activity android:name=".ActivityR"
-            android:screenOrientation="sensor">
-
-        </activity>
+        <activity
+            android:name=".Login"
+            android:exported="true" />
+        <activity
+            android:name=".MapsActivity"
+            android:exported="true" />
+        <activity
+            android:name=".ActivityR"
+            android:screenOrientation="sensor" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -28,11 +33,21 @@
              You can define the keys for the debug and release targets in src/debug/ and src/release/.
         -->
         <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-2250234364983691~1167046436" />
+        <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
 
         <activity
-            android:name=".MapsActivity"
+            android:name="com.facebook.FacebookActivity"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+            android:label="@string/app_name" />
+        <activity
+            android:name=".SplashScreen"
             android:label="@string/title_activity_maps">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
