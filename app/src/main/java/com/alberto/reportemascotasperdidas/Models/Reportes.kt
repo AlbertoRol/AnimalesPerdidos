@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName
 @IgnoreExtraProperties
 data class Reportes (val tipo:String? = null, val tamano:String? = null,
                     val color:String? = null, val caracteristicas:String? = null,
-                    val fecha:String? = null, val hm: String? = null, val coordenadas: List<String>? = null, val arrayImagenes: List<String>? = null) {
+                    val fecha:String? = null, val hm: String? = null, val correo: String ?= null, val coordenadas: List<String>? = null,
+                     val arrayImagenes: List<String>? = null) {
 
 }

@@ -118,8 +118,6 @@ class NuevoReporte : Fragment() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
         model.datosUsuario.observe(viewLifecycleOwner, { datos ->
-            Log.d(TAG, "arrayNuevoi: " + datos.size)
-
             for (datosUsuario  in datos){
                 id = datosUsuario.idUsuario
                 nombre = datosUsuario.nombre
@@ -275,7 +273,7 @@ class NuevoReporte : Fragment() {
         model.insertAlta(
             Reportes(
                 animal, tamano, color!!.editText?.text.toString(),
-                caracteristicas!!.editText?.text.toString(), fechaFormato,hm), id!!
+                caracteristicas!!.editText?.text.toString(), fechaFormato,hm,email), id!!
         )
 
         model.alta.observe(viewLifecycleOwner, {

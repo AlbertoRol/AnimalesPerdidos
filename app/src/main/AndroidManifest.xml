@@ -46,6 +46,10 @@
             android:name="com.facebook.FacebookActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name" />
+        <provider android:authorities="com.facebook.app.FacebookContentProvider3971515856288377"
+            android:name="com.facebook.FacebookContentProvider"
+            android:exported="true"/>
+
         <activity
             android:name=".SplashScreen"
             android:label="@string/title_activity_maps">

@@ -136,7 +136,6 @@ object FirebaseReportesService {
                         for (datos in snapshot.children){
                             arrayKeys.add(datos.key!!)
                         }
-                        //Log.d(TAG, "size: " + r.arrayImagenes)
                         interfaceGetAllKeysUsers.onResponseGetAllKeysUsers(arrayKeys)
                     }
                 }
@@ -206,9 +205,9 @@ object FirebaseReportesService {
         }
     }
 
-    fun deleteReport(key: String, interfaceDeleteReport: InterfaceDeleteReport){
+    fun deleteReport(keyUsuario:String,keyMarker: String, interfaceDeleteReport: InterfaceDeleteReport){
         try {
-            database.child("reportes/altas").child(key).removeValue()
+            database.child("reportes/altas/usuarios/$keyUsuario").child(keyMarker).removeValue()
             interfaceDeleteReport.onResponseDeleteReport(0)
         }catch (error:FirebaseException){
             Log.d(TAG, "deleteReport: $error")

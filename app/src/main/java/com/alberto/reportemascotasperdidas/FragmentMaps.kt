@@ -20,6 +20,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.alberto.reportemascotasperdidas.Models.DatosPerfilUsuario
+import com.alberto.reportemascotasperdidas.Models.MarkerClass
 import com.alberto.reportemascotasperdidas.ViewModel.VMDatos
 import com.facebook.login.LoginManager
 import com.google.android.gms.ads.AdRequest
@@ -45,10 +46,15 @@ class FragmentMaps : Fragment() {
 
     private lateinit var mMap: GoogleMap
     private lateinit var markerCasa: Marker
+    private var idMarker: String?= null
+    private var keyUsuario: String?= null
+
+    private var arrayKeyUser: ArrayList<String> = ArrayList()
+    private var arrayKeyMarker: ArrayList<String> = ArrayList()
 
 
     private val model: VMDatos by activityViewModels()
-    val mHashMap = HashMap<Marker, String>()
+    val mHashMap = HashMap<Marker, MarkerClass>()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var latitude: String? = null
     private var longitud: String? = null
@@ -65,7 +71,6 @@ class FragmentMaps : Fragment() {
     private var arrayKeysUsuariosReportes: ArrayList<String> = ArrayList()
 
     private lateinit var idUsuario: String
-
     private lateinit var appbarLayout: AppBarLayout
 
     @SuppressLint("MissingPermission")
@@ -99,11 +104,6 @@ class FragmentMaps : Fragment() {
                 nombre = datosUsuario.nombre!!
                 email = datosUsuario.email!!
                 foto = datosUsuario.img!!
-
-                Log.d(TAG, "id: " + idUsuario)
-                Log.d(TAG, "nombre: " + nombre)
-                Log.d(TAG, "email: " + email)
-                Log.d(TAG, "foto: " + foto)
 
                 val header = navigationView.getHeaderView(0)
                 val panel = header.findViewById<CircleImageView>(R.id.profile)
@@ -143,44 +143,41 @@ class FragmentMaps : Fragment() {
                         Log.d(TAG, "Style parsing failed.")
                     }
 
-                    model.getKeysUsers().observe(viewLifecycleOwner, {
-                        for (keys in it){
-                            arrayKeysUsuarios.add(keys)
-                        }
-                        model.getAltas(it).observe(viewLifecycleOwner, {
-                            Log.d(TAG, "size: " + it.size)
-                            for (keys in arrayKeysUsuarios){
+                    model.getKeysUsers().observe(viewLifecycleOwner, { keyUser ->
+                        model.getAltas(keyUser).observe(viewLifecycleOwner, {
                                 for(i in 0 until it.size){
-                                    //Log.d(TAG, "status:45 " + it[i].keys!![i])
-                                    //Log.d(TAG, "longitud: " + (it[i].reportes!![i].coordenadas?.get(1)))
                                     var marker = LatLng(it[i].reportes!![i].coordenadas!!.get(0).toDouble(), it[i].reportes!![i].coordenadas?.get(1)!!.toDouble())
+                                    idMarker = it[i].keys!![i]
 
                                     when(it[i].reportes!![i].tipo){
                                         "Gato" -> markerCasa = mMap.addMarker(
-                                            MarkerOptions().position(marker).icon(BitmapDescriptorFactory.fromResource(R.drawable.gato)).title(keys))
+                                            MarkerOptions().position(marker).icon(BitmapDescriptorFactory.fromResource(R.drawable.gato)))
                                         "Perro" -> markerCasa = mMap.addMarker(
-                                            MarkerOptions().position(marker).icon(BitmapDescriptorFactory.fromResource(R.drawable.perro)).title(keys))
+                                            MarkerOptions().position(marker).icon(BitmapDescriptorFactory.fromResource(R.drawable.perro)))
                                         else ->{
                                             markerCasa = mMap.addMarker(MarkerOptions().position(marker))
                                         }
                                     }
                                     mMap.isMyLocationEnabled()
                                     mMap.setOnMarkerClickListener(this)
-                                    mHashMap.put(markerCasa,it[i].keys!![i])
+                                    mHashMap.put(markerCasa, MarkerClass(keyUser.get(i).toString(),idMarker))
                                 }
-                            }
                         })
                     })
                 }
 
                 override fun onMarkerClick(marker: Marker): Boolean {
                     // Retrieve the data from the marker.
-                    val clickCount = marker.tag as? Int
-                    val id = mHashMap.get(marker)
+                    var arrayListKeys:ArrayList<String> = ArrayList()
 
-                    Log.d(TAG, "id: " + id)
-                    model.getReporteById(marker.title,id.toString())
-                    model.setKey(id.toString())
+                    val keyUser = mHashMap.get(marker)!!.keyUsuario
+                    val idMarker = mHashMap.get(marker)!!.idMarker
+                    arrayListKeys.add(keyUser.toString())
+                    arrayListKeys.add(idMarker.toString())
+
+                    Log.d(TAG, "key y id: " + keyUser +" "+ idMarker)
+                    model.getReporteById(keyUser.toString(),idMarker.toString())
+                    model.setKey(arrayListKeys)
                     val detailMarkers = DetailMarker()
                     detailFraagment(detailMarkers)
 

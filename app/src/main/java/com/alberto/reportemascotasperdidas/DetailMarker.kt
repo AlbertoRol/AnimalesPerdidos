@@ -3,6 +3,7 @@ package com.alberto.reportemascotasperdidas
 import android.app.ActivityOptions
 import android.app.Dialog
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -11,9 +12,13 @@ import android.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.viewModelScope
 import androidx.viewbinding.ViewBinding
 import com.alberto.reportemascotasperdidas.Models.DatosPerfilUsuario
 import com.alberto.reportemascotasperdidas.ViewModel.VMDatos
+import com.facebook.CallbackManager
+import com.facebook.share.model.ShareHashtag
+import com.facebook.share.model.ShareLinkContent
 import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.textfield.TextInputEditText
@@ -23,6 +28,10 @@ import com.limerse.slider.ImageCarousel
 import com.limerse.slider.listener.CarouselListener
 import com.limerse.slider.model.CarouselItem
 import java.lang.Exception
+import com.facebook.share.widget.ShareDialog
+
+
+
 
 class DetailMarker : Fragment() {
     private val TAG = "DetailMarker"
@@ -34,6 +43,7 @@ class DetailMarker : Fragment() {
     private var caracteristicas: TextInputLayout? = null
     private var fecha: TextInputEditText? = null
     private var hora: TextInputEditText? = null
+    private var correo: TextInputEditText? = null
 
     private var key: String ?= null
     private var animal: String ?= null
@@ -42,13 +52,19 @@ class DetailMarker : Fragment() {
     private var caract: String ?= null
     private var f: String ?= null
     private var hm: String ?= null
-    private val list = mutableListOf<CarouselItem>()
+    private var email: String ?= null
+    private var latitude: String ?= null
+    private var longitude: String ?= null
 
-    private lateinit var idUsuario: String
-    private lateinit var nombre: String
-    private lateinit var email: String
-    private lateinit var foto: String
-    private var arrayDatosUsuario: ArrayList<DatosPerfilUsuario> = ArrayList()
+
+    private var keyUsuario:String?= null
+    private var keyMarker:String?= null
+
+    private lateinit var callBackManager: CallbackManager
+    private lateinit var shareDialog: ShareDialog
+
+
+    private val list = mutableListOf<CarouselItem>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -57,10 +73,14 @@ class DetailMarker : Fragment() {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_detail_marker, container, false)
 
+        callBackManager = CallbackManager.Factory.create()
+        shareDialog =  ShareDialog(this);
 
-        model.key.observe(viewLifecycleOwner, { k ->
-            Log.d(TAG, "key: $k")
-            key = k
+        val carousel: ImageCarousel = view.findViewById(R.id.carousel)
+        model.key.observe(viewLifecycleOwner, { keys ->
+            Log.d(TAG, "key: ${keys.size}")
+            keyUsuario = keys.get(0)
+            keyMarker = keys.get(1)
         })
 
         val collapsingToolbarLayout = view.findViewById<CollapsingToolbarLayout>(R.id.collapsingTool)
@@ -74,20 +94,23 @@ class DetailMarker : Fragment() {
         toolbar.setNavigationOnClickListener {
             val fragmentMaps = FragmentMaps()
             openFrgament(fragmentMaps)
+            model.cleanReportById()
         }
 
         toolbar.setOnMenuItemClickListener{ menuItem ->
             when(menuItem.itemId) {
                 R.id.compartir -> {
-                    saludar("hola")
+                    prueba()
                     true
                 }
                 R.id.eliminar -> {
-                    model.deleteReportKey(key!!)
+                    model.deleteReportKey(keyUsuario!!,keyMarker!!)
                     model.deleteReport.observe(viewLifecycleOwner, {
                         Log.d(TAG, "delete: $it")
                         if (it == 0){
-                            mainMaps()
+                            val fragmentMaps = FragmentMaps()
+                            openFrgament(fragmentMaps)
+                            model.cleanReportes()
                         }
                     })
                     true
@@ -103,9 +126,10 @@ class DetailMarker : Fragment() {
         caracteristicas = view.findViewById(R.id.tfCaracteristicas)
         fecha = view.findViewById(R.id.date)
         hora = view.findViewById(R.id.time)
+        correo = view.findViewById(R.id.correo)
 
         model.reporteById.observe(viewLifecycleOwner, {
-            Log.d(ModalBottomSheet.TAG, "id: " + it)
+            Log.d(TAG, "id: " + it)
             for (reportes in it){
                 animal = reportes.tipo
                 tamano = reportes.tamano
@@ -113,9 +137,12 @@ class DetailMarker : Fragment() {
                 caract = reportes.caracteristicas
                 f = reportes.fecha
                 hm = reportes.hm
+                email = reportes.correo
+                latitude = reportes.coordenadas!!.get(0)
+                longitude = reportes.coordenadas.get(1)
                 try {
                     reportes.arrayImagenes!!.forEach {
-                        Log.d(ModalBottomSheet.TAG, "onCreateView: " + it)
+                        Log.d(TAG, "onCreateView: " + it)
                         list.add(
                             CarouselItem(
                                 imageUrl = it.toString()
@@ -133,10 +160,9 @@ class DetailMarker : Fragment() {
             caracteristicas!!.editText!!.setText(caract)
             fecha!!.setText(f)
             hora!!.setText(hm)
+            correo!!.setText(email)
 
-            val carousel: ImageCarousel = view.findViewById(R.id.carousel)
             carousel.setData(list)
-
             carousel.carouselListener = object : CarouselListener {
                 override fun onClick(position: Int, carouselItem: CarouselItem) {
                     Log.d(TAG, "item: ${carouselItem.imageUrl}")
@@ -148,12 +174,6 @@ class DetailMarker : Fragment() {
         })
 
         return view
-    }
-
-    fun mainMaps(){
-        val intent = Intent(requireContext(), MapsActivity::class.java)
-        val options = ActivityOptions.makeCustomAnimation(requireContext(),R.anim.fade_in, R.anim.fade_out)
-        startActivity(intent, options.toBundle())
     }
 
     fun openFrgament(fragment: Fragment){
@@ -183,5 +203,20 @@ class DetailMarker : Fragment() {
         super.onCreateOptionsMenu(menu, inflater)
     }
 
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        callBackManager.onActivityResult(requestCode, resultCode, data)
+    }
+
+    fun prueba(){
+        var shareLinkContent = ShareLinkContent.Builder()
+            .setContentUrl(Uri.parse("https://www.google.com/maps/place/$latitude,$longitude"))
+            .setShareHashtag(ShareHashtag.Builder()
+            .setHashtag("#AniamlesPerdidos")
+            .build())
+            .build()
+        shareDialog.show(shareLinkContent)
+    }
 
 }

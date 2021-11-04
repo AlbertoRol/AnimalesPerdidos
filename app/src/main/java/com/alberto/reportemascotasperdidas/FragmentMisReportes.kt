@@ -71,16 +71,19 @@ class FragmentMisReportes : Fragment() {
                 for(i in 0 until it.size){
                     arrayKeysUsuarios.add(it[i].keys!![i])
                     arrayReportes.add(Reportes(it[i].reportes!![i].tipo,it[i].reportes!![i].tamano,it[i].reportes!![i].color,
-                        it[i].reportes!![i].caracteristicas,it[i].reportes!![i].fecha,it[i].reportes!![i].hm,it[i].reportes!![i].coordenadas,it[i].reportes!![i].arrayImagenes))
+                        it[i].reportes!![i].caracteristicas,it[i].reportes!![i].fecha,it[i].reportes!![i].hm,it[i].reportes!![i].correo,it[i].reportes!![i].coordenadas,it[i].reportes!![i].arrayImagenes))
                     arrayGetReportes.add(GetReportes(arrayKeysUsuarios,arrayReportes))
                 }
                 var adapter = AdapterMisReportes(arrayGetReportes)
                 recyclerView.adapter = adapter
                 adapter.setOnItemClickListener(object: AdapterMisReportes.onItemClickListener{
                     override fun onItemClick(idMarker: String) {
-                        Log.d(TAG, "click tipo: " + idMarker)
+                        var arrayKeys :ArrayList<String> = ArrayList()
                         model.getReporteById(idUser.toString(),idMarker)
-                        model.setKey(idMarker)
+                        arrayKeys.add(idUser.toString())
+                        arrayKeys.add(idMarker.toString())
+
+                        model.setKey(arrayKeys)
                         model.datosPerfilUsuario(arrayDatosUsuario)
                         val detailMarkers = DetailMarker()
                         detailFraagment(detailMarkers)
@@ -92,6 +95,7 @@ class FragmentMisReportes : Fragment() {
         atras.setOnClickListener {
             val mapsFragment = FragmentMaps()
             detailFraagment(mapsFragment)
+            model.cleanMisAltas()
         }
 
         return view

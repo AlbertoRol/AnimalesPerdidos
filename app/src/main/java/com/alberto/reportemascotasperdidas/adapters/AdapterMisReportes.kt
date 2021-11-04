@@ -12,6 +12,7 @@ import com.alberto.reportemascotasperdidas.R
 import com.google.android.material.imageview.ShapeableImageView
 import com.limerse.slider.adapter.FiniteCarouselAdapter
 import com.squareup.picasso.Picasso
+import java.lang.Exception
 
 class AdapterMisReportes(private val arrayReportes: ArrayList<GetReportes>) : RecyclerView.Adapter<AdapterMisReportes.MyViewHolder>(){
 
@@ -34,9 +35,13 @@ class AdapterMisReportes(private val arrayReportes: ArrayList<GetReportes>) : Re
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         val currentItem = arrayReportes
 
-        Picasso.get()
-            .load(currentItem[position].reportes!![position].arrayImagenes!!.get(0))
-            .into(holder.foto)
+        try {
+            Picasso.get()
+                .load(currentItem[position].reportes!![position].arrayImagenes!!.get(0))
+                .into(holder.foto)
+        }catch (ex:Exception){
+
+        }
         holder.tipo.text = currentItem[position].reportes!![position].tipo
         holder.tamano.text = currentItem[position].reportes!![position].tamano
         holder.fecha.text = currentItem[position].reportes!![position].fecha

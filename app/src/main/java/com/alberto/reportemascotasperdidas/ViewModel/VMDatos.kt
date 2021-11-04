@@ -40,7 +40,7 @@ class VMDatos: ViewModel() {
     private val _coordenadas = MutableLiveData<Int>()
     val coordenadas: LiveData<Int> get() = _coordenadas
 
-    private val _reportById = MutableLiveData<ArrayList<Reportes>>()
+    private var _reportById = MutableLiveData<ArrayList<Reportes>>()
     val reporteById: LiveData<ArrayList<Reportes>> get() = _reportById
 
     private val _urlImage = MutableLiveData<String>()
@@ -49,8 +49,8 @@ class VMDatos: ViewModel() {
     private val _deleteReport = MutableLiveData<Int>()
     val deleteReport: LiveData<Int> get() = _deleteReport
 
-    private val _key = MutableLiveData<String>()
-    val key: LiveData<String> get() = _key
+    private val _key = MutableLiveData<ArrayList<String>>()
+    val key: LiveData<ArrayList<String>> get() = _key
 
     private val _keyUser = MutableLiveData<String>()
     val keyUser: LiveData<String> get() = _keyUser
@@ -58,21 +58,18 @@ class VMDatos: ViewModel() {
     private val _datosUsuario = MutableLiveData<ArrayList<DatosPerfilUsuario>>()
     val datosUsuario: LiveData<ArrayList<DatosPerfilUsuario>> get() = _datosUsuario
 
-    private val _altas: MutableLiveData<ArrayList<GetReportes>> by lazy {
-        MutableLiveData<ArrayList<GetReportes>>().also {
-        }
-    }
+    private var _altas = MutableLiveData<ArrayList<GetReportes>>()
 
-    private val _misAltas: MutableLiveData<ArrayList<GetReportes>> by lazy {
-        MutableLiveData<ArrayList<GetReportes>>().also {
-        }
-    }
+    private var _misAltas= MutableLiveData<ArrayList<GetReportes>>()
 
     private val _keysUsers: MutableLiveData<ArrayList<String>> by lazy {
         MutableLiveData<ArrayList<String>>().also {
         }
     }
 
+    fun cleanReportes(){
+        _altas =  MutableLiveData<ArrayList<GetReportes>>()
+    }
 
     fun getTipoAnimal() {
         viewModelScope.launch (Dispatchers.IO){
@@ -158,6 +155,10 @@ class VMDatos: ViewModel() {
         return misAltas(keysUser)
     }
 
+    fun cleanMisAltas() {
+        _misAltas = MutableLiveData<ArrayList<GetReportes>>()
+    }
+
 
     fun keysUsers(): MutableLiveData<ArrayList<String>>{
         viewModelScope.launch { Dispatchers.IO
@@ -184,21 +185,25 @@ class VMDatos: ViewModel() {
         }
     }
 
+    fun cleanReportById(){
+        _reportById = MutableLiveData<ArrayList<Reportes>>()
+    }
+
     fun urlImage(url: String){
         viewModelScope.launch(Dispatchers.IO){
             _urlImage.postValue(url)
         }
     }
 
-    fun setKey(key: String){
+    fun setKey(arrayID:ArrayList<String>){
         viewModelScope.launch(Dispatchers.IO){
-            _key.postValue(key)
+            _key.postValue(arrayID)
         }
     }
 
-    fun deleteReportKey(key: String){
+    fun deleteReportKey(keyUsuario:String,key: String){
         viewModelScope.launch(Dispatchers.IO){
-            FirebaseReportesService.deleteReport(key, object: InterfaceDeleteReport{
+            FirebaseReportesService.deleteReport(keyUsuario,key, object: InterfaceDeleteReport{
                 override fun onResponseDeleteReport(entero: Int) {
                     _deleteReport.postValue(entero)
                 }

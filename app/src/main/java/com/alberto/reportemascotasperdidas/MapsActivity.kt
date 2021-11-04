@@ -129,11 +129,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 email = datosUsuario.email!!
                 foto = datosUsuario.img!!
 
-                Log.d(TAG, "id: " + idUsuario)
-                Log.d(TAG, "nombre: " + nombre)
-                Log.d(TAG, "email: " + email)
-                Log.d(TAG, "foto: " + foto)
-
                 val header = navigationView.getHeaderView(0)
                 val panel = header.findViewById<CircleImageView>(R.id.profile)
                 Picasso.get()
@@ -198,6 +193,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             for (keys in it){
                 arrayKeysUsuarios.add(keys)
             }
+
+            for (datos in arrayKeysUsuarios){
+                Log.d(TAG, "keys: " + datos)
+            }
             model.getAltas(it).observe(this, {
                 Log.d(TAG, "size: " + it.size)
                 for (keys in arrayKeysUsuarios){
@@ -248,9 +247,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         val clickCount = marker.tag as? Int
         val id = mHashMap.get(marker)
 
-        Log.d(TAG, "id: " + id)
+        Log.d(TAG, "title y id: " + marker.title +" "+id)
         model.getReporteById(marker.title,id.toString())
-        model.setKey(id.toString())
+        //model.setKey(id.toString())
         val detailMarkers = DetailMarker()
         detailFraagment(detailMarkers)
         /*val modalBottomSheet = ModalBottomSheet()
