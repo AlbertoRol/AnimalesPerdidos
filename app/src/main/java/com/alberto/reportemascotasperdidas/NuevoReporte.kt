@@ -15,6 +15,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -55,6 +56,7 @@ class NuevoReporte : Fragment() {
     private var caracteristicas: TextInputLayout? = null
     private var fecha: TextInputEditText? = null
     private var hora: TextInputEditText? = null
+    private var numFotos: TextView? = null
     private var arrayImagenes: ArrayList<String> = ArrayList()
     private var arrayLocation: ArrayList<String> = ArrayList()
 
@@ -82,6 +84,7 @@ class NuevoReporte : Fragment() {
                 val fileUri = data?.data!!
                 Log.d(TAG, ": " + fileUri.path)
                 arrayImagenes.add(fileUri.path.toString())
+                numFotos!!.text = "Número de fotos: " + arrayImagenes.size.toString()
 
             } else if (resultCode == ImagePicker.RESULT_ERROR) {
                 Toast.makeText(requireContext(), ImagePicker.getError(data), Toast.LENGTH_SHORT)
@@ -138,6 +141,8 @@ class NuevoReporte : Fragment() {
         hora = view.findViewById(R.id.time)
         guarda = view.findViewById(R.id.guardar)
         atras = view.findViewById(R.id.atras)
+        numFotos = view.findViewById(R.id.numerofotos)
+
 
         model.getTipoAnimal()
         model.getTamano()
@@ -294,7 +299,8 @@ class NuevoReporte : Fragment() {
                 key = ""
                 //Log.d(TAG, "key: " + key)
             }
-            mainFragment()
+            val fragmentMaps = FragmentMaps()
+            detailFraagment(fragmentMaps)
         })
     }
 
@@ -317,14 +323,6 @@ class NuevoReporte : Fragment() {
         activityResultLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
-    fun mainFragment(){
-        val intent = Intent(activity, MapsActivity::class.java)
-        intent.putExtra("id", id)
-        intent.putExtra("nombre", nombre)
-        intent.putExtra("email", email)
-        intent.putExtra("foto", foto)
-        startActivity(intent)
-    }
 
     fun detailFraagment(fragment: Fragment){
         val mapsFrgament = fragment

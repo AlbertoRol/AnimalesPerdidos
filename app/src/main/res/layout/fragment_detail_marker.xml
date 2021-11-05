@@ -166,7 +166,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:hint="@string/correo"
-                app:startIconDrawable="@drawable/ic_hora">
+                app:startIconDrawable="@drawable/ic_contacto">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/correo"

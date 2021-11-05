@@ -122,6 +122,16 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
+    <TextView
+        android:id="@+id/numerofotos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/timePicker" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fotos"
         android:layout_width="wrap_content"

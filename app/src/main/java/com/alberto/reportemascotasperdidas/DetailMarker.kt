@@ -29,8 +29,8 @@ import com.limerse.slider.listener.CarouselListener
 import com.limerse.slider.model.CarouselItem
 import java.lang.Exception
 import com.facebook.share.widget.ShareDialog
-
-
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 
 
 class DetailMarker : Fragment() {
@@ -62,6 +62,8 @@ class DetailMarker : Fragment() {
 
     private lateinit var callBackManager: CallbackManager
     private lateinit var shareDialog: ShareDialog
+
+    private var arrayNumFotos: ArrayList<String> = ArrayList()
 
 
     private val list = mutableListOf<CarouselItem>()
@@ -100,17 +102,19 @@ class DetailMarker : Fragment() {
         toolbar.setOnMenuItemClickListener{ menuItem ->
             when(menuItem.itemId) {
                 R.id.compartir -> {
-                    prueba()
+                    compartir()
                     true
                 }
                 R.id.eliminar -> {
                     model.deleteReportKey(keyUsuario!!,keyMarker!!)
                     model.deleteReport.observe(viewLifecycleOwner, {
+                        borrarFotos()
                         Log.d(TAG, "delete: $it")
                         if (it == 0){
                             val fragmentMaps = FragmentMaps()
                             openFrgament(fragmentMaps)
                             model.cleanReportes()
+                            model.cleanReportById()
                         }
                     })
                     true
@@ -129,6 +133,7 @@ class DetailMarker : Fragment() {
         correo = view.findViewById(R.id.correo)
 
         model.reporteById.observe(viewLifecycleOwner, {
+            var numero: Int = 0
             Log.d(TAG, "id: " + it)
             for (reportes in it){
                 animal = reportes.tipo
@@ -143,6 +148,8 @@ class DetailMarker : Fragment() {
                 try {
                     reportes.arrayImagenes!!.forEach {
                         Log.d(TAG, "onCreateView: " + it)
+                        numero++
+                        arrayNumFotos.add(numero.toString())
                         list.add(
                             CarouselItem(
                                 imageUrl = it.toString()
@@ -209,7 +216,7 @@ class DetailMarker : Fragment() {
         callBackManager.onActivityResult(requestCode, resultCode, data)
     }
 
-    fun prueba(){
+    fun compartir(){
         var shareLinkContent = ShareLinkContent.Builder()
             .setContentUrl(Uri.parse("https://www.google.com/maps/place/$latitude,$longitude"))
             .setShareHashtag(ShareHashtag.Builder()
@@ -219,4 +226,17 @@ class DetailMarker : Fragment() {
         shareDialog.show(shareLinkContent)
     }
 
+    fun borrarFotos(){
+        var storage = Firebase.storage
+        var storageRef = storage.reference
+        for (numero in arrayNumFotos){
+            Log.d(TAG, "foto: " + numero)
+            val borrar = storageRef.child("altas/$keyUsuario/"+keyMarker+"/"+numero+".jpg")
+            borrar.delete().addOnSuccessListener {
+                Log.d(TAG, "borrado: ")
+            }.addOnFailureListener{
+                Log.d(TAG, "no borrado: ")
+            }
+        }
+    }
 }
